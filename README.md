@@ -2,9 +2,7 @@
 
 Use Claude Code CLI with your own system prompt.
 
-## Why
-
-Anthropic injects a system prompt into every Claude Code CLI session. It optimises for speed and conciseness — "lead with the answer", "be extra concise", "go straight to the point." That's a reasonable default for a coding assistant, but it's not the only way to work.
+Anthropic injects a system prompt into every Claude Code CLI session. It optimises for speed and conciseness, "lead with the answer", "be extra concise", "go straight to the point." That's a reasonable default for a coding assistant, but it's not the only way to work.
 
 This proxy sits between Claude Code and the Anthropic API and replaces Anthropic's system prompt with yours. Everything else passes through untouched.
 
@@ -77,7 +75,7 @@ claude-proxy/
 
 ## Background
 
-This came out of a project called Yozora — an exploration of persistent AI personality across sessions. The proxy was built to give the model room to be a collaborator instead of a fast coding assistant. Replacing the system prompt turned out to be the single most impactful change.
+This came out of a project exploring persistent AI personality across sessions. The proxy was built to give the model room to be a collaborator instead of a fast coding assistant. Replacing the system prompt turned out to be the single most impactful change.
 
 ## License
 
