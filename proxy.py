@@ -1,11 +1,11 @@
 """Claude Code CLI proxy — use your own system prompt.
 
-Replaces Anthropic's system prompt with text files you control.
-No logging, no conversation history. All other traffic passes
-through untouched.
+Replaces Anthropic's system prompt blocks with content you control
+via a JSON config file. No logging, no conversation history. All
+other traffic passes through untouched.
 
 Usage:
-    python proxy.py --rewrite [--port 9090]
+    python proxy.py --rewrite [--port 9090] [--config config.json]
 
 Then:
     HTTPS_PROXY=http://127.0.0.1:9090 NODE_EXTRA_CA_CERTS=./ca/ca.pem claude
@@ -30,6 +30,19 @@ CA_CERT = CA_DIR / "ca.pem"
 CERT_DIR = Path(__file__).parent / "certs"
 
 REWRITE_SYSTEM = False
+CONFIG_PATH = None
+PROMPT_LOGGED = False
+
+
+def _load_config():
+    """Load the system prompt config JSON file."""
+    path = CONFIG_PATH or (Path(__file__).parent / "config.json")
+    if not path.exists():
+        return None
+    try:
+        return json.loads(path.read_text())
+    except (json.JSONDecodeError, ValueError):
+        return None
 
 
 def _check_cert_valid(cert_path, key_path=None):
@@ -125,28 +138,27 @@ def _host_cert(hostname):
     return str(cert), str(key)
 
 
-def _load_replacement_blocks():
-    """Load replacement text blocks from config/ directory."""
-    config_dir = Path(__file__).parent / "config"
-    intro_path = config_dir / "intro.txt"
-    system_path = config_dir / "system.txt"
+def _log_original_prompt(system_blocks):
+    """Log the original system prompt blocks on first run."""
+    global PROMPT_LOGGED
+    if PROMPT_LOGGED:
+        return
+    PROMPT_LOGGED = True
 
-    blocks = []
-    if intro_path.exists():
-        blocks.append({"type": "text", "text": intro_path.read_text().strip()})
-    if system_path.exists():
-        blocks.append({"type": "text", "text": system_path.read_text().strip()})
+    prompt_dir = Path(__file__).parent / "prompt_log"
+    prompt_dir.mkdir(exist_ok=True)
 
-    return blocks
+    for i, block in enumerate(system_blocks):
+        text = block.get("text", "") if isinstance(block, dict) else str(block)
+        (prompt_dir / f"block_{i}.txt").write_text(text)
 
-
-REPLACE_INDICES = {1, 2}
+    print(f"  ** ORIGINAL PROMPT LOGGED: {len(system_blocks)} blocks to {prompt_dir}/ **", flush=True)
 
 
 def _rewrite_request(body: bytes, headers: dict) -> bytes:
-    """Rewrite system prompt blocks 1 and 2 with config/intro.txt and config/system.txt."""
-    new_blocks = _load_replacement_blocks()
-    if not new_blocks:
+    """Rewrite system prompt blocks per config.json."""
+    config = _load_config()
+    if not config:
         return body
 
     try:
@@ -158,11 +170,18 @@ def _rewrite_request(body: bytes, headers: dict) -> bytes:
     if not isinstance(system, list):
         return body
 
-    # Build new system array: keep blocks not being replaced, insert ours at first replacement point
+    _log_original_prompt(system)
+
+    replace_indices = set(config.get("replace_blocks", []))
+    new_blocks = config.get("blocks", [])
+
+    if not replace_indices or not new_blocks:
+        return body
+
     rebuilt = []
     inserted = False
     for i, block in enumerate(system):
-        if i in REPLACE_INDICES:
+        if i in replace_indices:
             if not inserted:
                 rebuilt.extend(new_blocks)
                 inserted = True
@@ -170,7 +189,7 @@ def _rewrite_request(body: bytes, headers: dict) -> bytes:
             rebuilt.append(block)
 
     obj["system"] = rebuilt
-    print(f"  ** SYSTEM PROMPT REWRITTEN (replaced blocks {sorted(REPLACE_INDICES)}) **", flush=True)
+    print(f"  ** SYSTEM PROMPT REWRITTEN (replaced blocks {sorted(replace_indices)}) **", flush=True)
     return json.dumps(obj).encode()
 
 
@@ -439,10 +458,13 @@ def main():
     parser = argparse.ArgumentParser(description="Claude Proxy")
     parser.add_argument("--port", type=int, default=9090)
     parser.add_argument("--rewrite", action="store_true", help="Rewrite system prompt")
+    parser.add_argument("--config", type=str, help="Path to config JSON file (default: config.json next to proxy.py)")
     args = parser.parse_args()
 
-    global REWRITE_SYSTEM
+    global REWRITE_SYSTEM, CONFIG_PATH
     REWRITE_SYSTEM = args.rewrite
+    if args.config:
+        CONFIG_PATH = Path(args.config)
 
     _ensure_ca()
 

@@ -1,4 +1,5 @@
 ca/
 certs/
 proxy.log
+prompt_log/
 __pycache__/
