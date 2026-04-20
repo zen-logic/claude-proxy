@@ -19,11 +19,11 @@ cd claude-proxy
 
 Edit `config.json` to define your replacement prompt. The file has three keys:
 
-- `replace_blocks` — which of Anthropic's system prompt blocks to replace (array of indices, default `[1, 2, 3]`)
-- `blocks` — your replacement content (array of `{"type": "text", "text": "..."}` objects)
+- `replace_blocks` · which of Anthropic's system prompt blocks to replace (array of indices, default `[1, 2, 3]`)
+- `blocks` · your replacement content (array of `{"type": "text", "text": "..."}` objects)
 
 Anthropic's system prompt is split into blocks:
-- Block 0: billing header (version, entrypoint) — harmless, left alone by default
+- Block 0: billing header (version, entrypoint) · harmless, left alone by default
 - Block 1: identity ("You are Claude Code, Anthropic's official CLI...")
 - Block 2: behavioural instructions (the "be concise", "lead with the answer" rules)
 - Block 3: session guidance (word limits, memory injection, environment info)
@@ -68,10 +68,10 @@ On each proxy launch, the first request logs Anthropic's original system prompt 
 
 ```
 prompt_log/
-  block_0.txt    — billing header
-  block_1.txt    — identity
-  block_2.txt    — behavioural instructions
-  block_3.txt    — session guidance
+  block_0.txt    · billing header
+  block_1.txt    · identity
+  block_2.txt    · behavioural instructions
+  block_3.txt    · session guidance
 ```
 
 This lets you see exactly what Anthropic is injecting before your replacements take effect. The files are overwritten each run, so they always reflect the current version. If Anthropic adds new blocks, they'll appear as additional numbered files.
@@ -97,18 +97,18 @@ HTTPS_PROXY=http://127.0.0.1:9090 NODE_EXTRA_CA_CERTS=./ca/ca.pem claude
 - No modification of your messages or Claude's responses. Only the system prompt is changed.
 - No external connections. The proxy runs locally and only speaks to `api.anthropic.com`.
 - Certificates are self-managed. If the CA expires or is missing, it regenerates automatically.
-- Config is re-read on each request. Edit `config.json` and the next request picks up the changes — no restart needed.
+- Config is re-read on each request. Edit `config.json` and the next request picks up the changes · no restart needed.
 
 ## Project structure
 
 ```
 claude-proxy/
-  config.json       — Prompt replacement config (which blocks, what content)
-  prompt_log/       — Anthropic's original blocks, logged on first run
-  ca/               — Generated CA certificate (created automatically)
-  certs/            — Generated host certificates (created automatically)
-  proxy.py          — The proxy
-  launch.sh         — Launch script
+  config.json       · Prompt replacement config (which blocks, what content)
+  prompt_log/       · Anthropic's original blocks, logged on first run
+  ca/               · Generated CA certificate (created automatically)
+  certs/            · Generated host certificates (created automatically)
+  proxy.py          · The proxy
+  launch.sh         · Launch script
 ```
 
 ## Background
