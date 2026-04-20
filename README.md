@@ -1,12 +1,10 @@
 # claude-proxy
 
-Use Claude Code CLI with your own system prompt.
+Replace Anthropic's system prompt in Claude Code CLI with your own.
 
-Anthropic injects a system prompt into every Claude Code CLI session. It optimises for speed and conciseness, "lead with the answer", "be extra concise", "go straight to the point." That's a reasonable default for a coding assistant, but it's not the only way to work.
+Claude Code's `--system-prompt` flag adds your instructions alongside Anthropic's. Their defaults ("lead with the answer", "be extra concise", "go straight to the point") are still there, still shaping every response. Your prompt has to compete with theirs.
 
-This proxy sits between Claude Code and the Anthropic API and replaces Anthropic's system prompt with yours. Everything else passes through untouched.
-
-You define the working relationship. Claude Code reads it as if it came from Anthropic.
+This proxy replaces Anthropic's system prompt blocks instead of adding to them. The model never sees the instructions you removed. Everything else passes through untouched.
 
 ## Setup
 
